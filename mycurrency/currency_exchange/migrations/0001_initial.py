@@ -3,42 +3,87 @@
 import django.db.models.deletion
 from django.db import migrations, models
 
+CURRENCIES_VALUES = [
+    {"code": "EUR", "name": "euro", "symbol": "€"},
+    {"code": "USD", "name": "dollar", "symbol": "$"},
+    {"code": "GBP", "name": "pound sterling", "symbol": "£"},
+    {"code": "CHF", "name": "Swiss Franc", "symbol": "₣"},
+]
+
+
+def initialize_base_currencies(apps, schema_editor) -> None:
+    Currency = apps.get_model("currency_exchange", "Currency")
+
+    Currency.objects.bulk_create(
+        [Currency(**currency_data) for currency_data in CURRENCIES_VALUES]
+    )
+
 
 class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Currency',
+            name="Currency",
             fields=[
-                ('code', models.CharField(max_length=10, primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=20, unique=True)),
-                ('symbol', models.CharField(max_length=10)),
+                (
+                    "code",
+                    models.CharField(
+                        max_length=10, primary_key=True, serialize=False, unique=True
+                    ),
+                ),
+                ("name", models.CharField(max_length=20, unique=True)),
+                ("symbol", models.CharField(max_length=10)),
             ],
             options={
-                'verbose_name': 'Currency',
-                'verbose_name_plural': 'Currencies',
-                'db_table': 'currency',
-                'abstract': False,
+                "verbose_name": "Currency",
+                "verbose_name_plural": "Currencies",
+                "db_table": "currency",
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='CurrencyExchangeRate',
+            name="CurrencyExchangeRate",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('valuation_date', models.DateField(db_index=True)),
-                ('rate_value', models.DecimalField(db_index=True, decimal_places=6, max_digits=18)),
-                ('source_currency', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='source_currency', to='currency_exchange.currency')),
-                ('target_currency', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='target_currency', to='currency_exchange.currency')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("valuation_date", models.DateField(db_index=True)),
+                (
+                    "rate_value",
+                    models.DecimalField(db_index=True, decimal_places=6, max_digits=18),
+                ),
+                (
+                    "source_currency",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="source_currency",
+                        to="currency_exchange.currency",
+                    ),
+                ),
+                (
+                    "target_currency",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="target_currency",
+                        to="currency_exchange.currency",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Currency exchange rate',
-                'verbose_name_plural': 'Currency exchange rates',
-                'db_table': 'currency_exchange_rate',
+                "verbose_name": "Currency exchange rate",
+                "verbose_name_plural": "Currency exchange rates",
+                "db_table": "currency_exchange_rate",
             },
         ),
+        migrations.RunPython(initialize_base_currencies),
     ]

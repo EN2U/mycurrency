@@ -29,3 +29,7 @@ class CurrencyExchangeRate(models.Model):
         db_table = "currency_exchange_rate"
         verbose_name = _("Currency exchange rate")
         verbose_name_plural = _("Currency exchange rates")
+
+
+class CurrencyExchangeManager(models.Manager):
+    pass
