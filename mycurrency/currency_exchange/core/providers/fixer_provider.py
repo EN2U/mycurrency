@@ -23,22 +23,15 @@ class FixerProvider(CurrencyExchangeRateProvider):
         self, current_date: date
     ) -> Dict[str, Union[str, Decimal]]:
         url = self.create_url(current_date=current_date)
-        return {
-            "success": True,
-            "timestamp": 1714780799,
-            "historical": True,
-            "base": "EUR",
-            "date": str(current_date),
-            "rates": {
-                "CHF": Decimal("0.974775"),
-                "EUR": Decimal("1"),
-                "GBP": Decimal("0.858447"),
-                "USD": Decimal("1.077179"),
-            },
-        }
+
         try:
             response = requests.request("GET", url)
-        except Exception as e:
-            raise e
 
-        return response.json(parse_float=Decimal)
+            if 200 <= response.status_code < 500:
+                return response.json(parse_float=Decimal)
+            else:
+                raise Exception(
+                    f"HTTP {response.status_code} error while calling {response.url}"
+                )
+        except requests.RequestException:
+            raise Exception(f"Connection failed while calling {response.url}")

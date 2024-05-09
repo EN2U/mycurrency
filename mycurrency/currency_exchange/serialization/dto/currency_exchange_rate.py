@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from datetime import date
 
 
-class CurrencyExchangeTimeSeriesDTO(BaseModel):
+class CurrencyExchangeTimeseriesDTO(BaseModel):
     start_date: date
     end_date: date
     provider: str
@@ -14,3 +14,21 @@ class CurrencyExchangeRateCreateDTO(BaseModel):
     rate_value: Decimal
     source_currency: str
     target_currency: str
+
+
+class CurrencyExchangeTimeseriesByCurrencyDTO(CurrencyExchangeTimeseriesDTO):
+    currency: str
+
+
+class CurrencyExchangeConversionDTO(BaseModel):
+    source_currency: str
+    target_currency: str
+    provider: str
+    amount: Decimal
+
+
+class CurrencyExchangeConvertedDTO(BaseModel):
+    source_currency: str
+    target_currency: str
+    amount: Decimal
+    rate_value: Decimal

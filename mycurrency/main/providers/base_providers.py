@@ -16,7 +16,7 @@ class CurrencyExchangeRateProvider(abc.ABC):
         access_key = self.get_access_key()
         code = ",".join(self.code)
         date_str = current_date.strftime(format="%Y-%m-%d")
-        return f"{self.provider_url}{date_str}?access_key={access_key}&code={code}"
+        return f"{self.provider_url}{date_str}?access_key={access_key}&symbols={code}"
 
     @abc.abstractmethod
     def get_currency_exchange_rate_by_date(

@@ -11,6 +11,9 @@ class CurrencyRepository:
 
         return [self._orm_to_entity(orm=currency) for currency in currency_queryset]
 
+    def check_currency_exists(self, currency: str) -> bool:
+        return CurrencyORM.objects.filter(code=currency).exists()
+
     def _orm_to_entity(self, orm: CurrencyORM) -> CurrencyEntity:
         return CurrencyEntity.model_validate(orm)
 

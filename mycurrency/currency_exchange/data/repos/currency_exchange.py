@@ -1,7 +1,8 @@
 from typing import List
 from currency_exchange.serialization.dto.currency_exchange_rate import (
     CurrencyExchangeRateCreateDTO,
-    CurrencyExchangeTimeSeriesDTO,
+    CurrencyExchangeTimeseriesByCurrencyDTO,
+    CurrencyExchangeTimeseriesDTO,
 )
 from currency_exchange.serialization.entity.currency_exchange_rate import (
     CurrencyExchangeRateEntity,
@@ -14,7 +15,7 @@ from currency_exchange.models import CurrencyExchangeRate as CurrencyExchangeRat
 
 class CurrencyExchangeRateRepository:
     def get_timeseries(
-        self, timeseries_dates_dto: CurrencyExchangeTimeSeriesDTO
+        self, timeseries_dates_dto: CurrencyExchangeTimeseriesDTO
     ) -> List[CurrencyExchangeRateEntity]:
         currency_exchange_rate_queryset: QuerySet[
             CurrencyExchangeRateORM
@@ -28,11 +29,25 @@ class CurrencyExchangeRateRepository:
             for currency_exchange_rate_orm in currency_exchange_rate_queryset
         ]
 
+    def get_timeseries_by_currency(
+        self, timeseries_by_currency_dto: CurrencyExchangeTimeseriesByCurrencyDTO
+    ) -> List[CurrencyExchangeRateEntity]:
+        currency_exchange_rate_queryset: QuerySet[
+            CurrencyExchangeRateORM
+        ] = self._get_queryset().filter(
+            valuation_date__gte=timeseries_by_currency_dto.start_date,
+            valuation_date__lte=timeseries_by_currency_dto.end_date,
+            source_currency__code=timeseries_by_currency_dto.currency,
+        )
+        return [
+            self._orm_to_entity(orm=currency_exchange_rate_orm)
+            for currency_exchange_rate_orm in currency_exchange_rate_queryset
+        ]
+
     def create_multiple_currency_exchange_rates(
         self, currency_exchange_rate_list_dto: List[CurrencyExchangeRateCreateDTO]
     ) -> List[CurrencyExchangeRateEntity]:
 
-        return []
         currency_exchange_rate_queryset: QuerySet[CurrencyExchangeRateORM] = (
             CurrencyExchangeRateORM.objects.bulk_create(
                 [
@@ -51,6 +66,18 @@ class CurrencyExchangeRateRepository:
             self._orm_to_entity(orm=currency_exchange_rate_orm)
             for currency_exchange_rate_orm in currency_exchange_rate_queryset
         ]
+
+    def get_by_source_target_currency(
+        self, source_currency: str, target_currency: str
+    ) -> CurrencyExchangeRateEntity:
+        currency_exchange_rate_orm: CurrencyExchangeRateORM = (
+            self._get_queryset()
+            .filter(source_currency_id=source_currency, target_currency=target_currency)
+            .order_by("-valuation_date")
+            .first()
+        )
+
+        return self._orm_to_entity(orm=currency_exchange_rate_orm)
 
     def _orm_to_entity(
         self, orm: CurrencyExchangeRateORM
