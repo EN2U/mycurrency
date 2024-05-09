@@ -2,14 +2,7 @@ from datetime import date
 from decimal import Decimal
 from pydantic import BaseModel
 
-
-class CurrencyEntity(BaseModel):
-    symbol: str
-    code: str
-    name: str
-
-    class Config:
-        from_attributes = True
+from currency_exchange.serialization.entity.currency import CurrencyEntity
 
 
 class CurrencyExchangeRateEntity(BaseModel):

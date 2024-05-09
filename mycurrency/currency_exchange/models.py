@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from main.base_models import CodeBaseModel
+from main.base_models import CodeBaseModel, UUIDBaseModel
 
 
 class Currency(CodeBaseModel):
@@ -13,7 +13,7 @@ class Currency(CodeBaseModel):
         verbose_name_plural = _("Currencies")
 
 
-class CurrencyExchangeRate(models.Model):
+class CurrencyExchangeRate(UUIDBaseModel):
     source_currency = models.ForeignKey(
         Currency, related_name="source_currency", on_delete=models.CASCADE
     )
@@ -29,6 +29,7 @@ class CurrencyExchangeRate(models.Model):
         db_table = "currency_exchange_rate"
         verbose_name = _("Currency exchange rate")
         verbose_name_plural = _("Currency exchange rates")
+        unique_together = ("source_currency", "target_currency", "valuation_date")
 
 
 class CurrencyExchangeManager(models.Manager):

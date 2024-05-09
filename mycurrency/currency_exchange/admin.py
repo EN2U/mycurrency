@@ -12,12 +12,14 @@ class CurrencyAdmin(admin.ModelAdmin):
 class CurrencyExchangeRateAdmin(admin.ModelAdmin):
     list_display = [
         "id",
+        "uuid",
         "source_currency_code",
         "target_currency_code",
         "valuation_date",
         "rate_value",
     ]
 
+    search_fields = ["uuid"]
     list_filter = ["source_currency__code", "target_currency__code"]
     list_select_related = ["source_currency", "target_currency"]
 
