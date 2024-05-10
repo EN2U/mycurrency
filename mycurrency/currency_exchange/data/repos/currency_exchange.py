@@ -1,6 +1,8 @@
+from datetime import date, datetime, timedelta
 from typing import List
 from currency_exchange.serialization.dto.currency_exchange_rate import (
     CurrencyExchangeRateCreateDTO,
+    CurrencyExchangeTimeseriesByCurrenciesDTO,
     CurrencyExchangeTimeseriesByCurrencyDTO,
     CurrencyExchangeTimeseriesDTO,
 )
@@ -32,13 +34,38 @@ class CurrencyExchangeRateRepository:
     def get_timeseries_by_currency(
         self, timeseries_by_currency_dto: CurrencyExchangeTimeseriesByCurrencyDTO
     ) -> List[CurrencyExchangeRateEntity]:
-        currency_exchange_rate_queryset: QuerySet[
-            CurrencyExchangeRateORM
-        ] = self._get_queryset().filter(
-            valuation_date__gte=timeseries_by_currency_dto.start_date,
-            valuation_date__lte=timeseries_by_currency_dto.end_date,
-            source_currency__code=timeseries_by_currency_dto.currency,
+        currency_exchange_rate_queryset: QuerySet[CurrencyExchangeRateORM] = (
+            self._filter_by_range_currency(
+                start_date=timeseries_by_currency_dto.start_date,
+                end_date=timeseries_by_currency_dto.end_date,
+                currency=timeseries_by_currency_dto.currency,
+            )
         )
+        return [
+            self._orm_to_entity(orm=currency_exchange_rate_orm)
+            for currency_exchange_rate_orm in currency_exchange_rate_queryset
+        ]
+
+    def _filter_by_range_currency(
+        self, start_date: date, end_date: date, currency: str
+    ):
+        return self._get_queryset().filter(
+            valuation_date__gte=start_date,
+            valuation_date__lte=end_date,
+            source_currency__code=currency,
+        )
+
+    def get_timeseries_by_source_target_currency(
+        self, timeseries_by_currencies_dto: CurrencyExchangeTimeseriesByCurrenciesDTO
+    ) -> List[CurrencyExchangeRateORM]:
+        currency_exchange_rate_queryset: QuerySet[CurrencyExchangeRateORM] = (
+            self._filter_by_range_currency(
+                start_date=timeseries_by_currencies_dto.start_date,
+                end_date=(datetime.now() - timedelta(days=1)).date(),
+                currency=timeseries_by_currencies_dto.source_currency,
+            ).filter(target_currency__code=timeseries_by_currencies_dto.target_currency)
+        )
+
         return [
             self._orm_to_entity(orm=currency_exchange_rate_orm)
             for currency_exchange_rate_orm in currency_exchange_rate_queryset

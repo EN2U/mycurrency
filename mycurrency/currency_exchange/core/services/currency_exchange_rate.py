@@ -10,6 +10,8 @@ from currency_exchange.utils import CurrencyExchangeRateOperations
 from currency_exchange.serialization.dto.currency_exchange_rate import (
     CurrencyExchangeConversionDTO,
     CurrencyExchangeConvertedDTO,
+    CurrencyExchangeRateTWRRDTO,
+    CurrencyExchangeTimeseriesByCurrenciesDTO,
     CurrencyExchangeRateCreateDTO,
     CurrencyExchangeTimeseriesByCurrencyDTO,
     CurrencyExchangeTimeseriesDTO,
@@ -131,6 +133,89 @@ class CurrencyExchangeRateService:
             rate_value=rate_value,
         )
 
+    def get_investment_rate_by_range(
+        self,
+        currency_exchange_investment_rate_dto: CurrencyExchangeTimeseriesByCurrenciesDTO,
+    ) -> List[CurrencyExchangeRateTWRRDTO]:
+
+        end_date = (datetime.now() - timedelta(days=1)).date()
+        self._validate_dates(
+            start_date=currency_exchange_investment_rate_dto.start_date,
+            end_date=end_date,
+        )
+        if not self._currency_repository.check_currency_exists(
+            currency=currency_exchange_investment_rate_dto.source_currency
+        ) or not self._currency_repository.check_currency_exists(
+            currency=currency_exchange_investment_rate_dto.target_currency
+        ):
+            raise ValueError("Invalid Currency code")
+
+        currency_exchange_rate_entity_list: List[CurrencyExchangeRateEntity] = (
+            self._currency_exchange_repository.get_timeseries_by_source_target_currency(
+                timeseries_by_currencies_dto=currency_exchange_investment_rate_dto
+            )
+        )
+
+        self._check_time_series(
+            currency_exchange_rate_entity_list=currency_exchange_rate_entity_list,
+            start_date=currency_exchange_investment_rate_dto.start_date,
+            end_date=end_date,
+            provider=currency_exchange_investment_rate_dto.provider,
+        )
+        filtered_entities: List[CurrencyExchangeRateEntity] = (
+            self._filter_entities_by_currencies(
+                entities=currency_exchange_rate_entity_list,
+                source_currency=currency_exchange_investment_rate_dto.source_currency,
+                target_currency=currency_exchange_investment_rate_dto.target_currency,
+            )
+        )
+
+        currency_exchange_rate_twrr_list: List[CurrencyExchangeRateTWRRDTO] = (
+            self._get_twrr(
+                amount=currency_exchange_investment_rate_dto.amount,
+                entities=filtered_entities,
+                start_date=currency_exchange_investment_rate_dto.start_date,
+                end_date=end_date,
+            )
+        )
+
+        return currency_exchange_rate_twrr_list
+
+    def _get_twrr(
+        self,
+        amount: Decimal,
+        entities: List[CurrencyExchangeRateEntity],
+        start_date: date,
+        end_date: date,
+    ) -> List[CurrencyExchangeRateTWRRDTO]:
+        twrr_daily_performance_list = []
+
+        previous_value = amount
+        cumulative_return = 0
+        for entity in entities:
+            if start_date <= entity.valuation_date <= end_date:
+                current_value = (previous_value * entity.rate_value).quantize(
+                    Decimal("1.000000")
+                )
+                daily_return = (
+                    (current_value - previous_value) / previous_value
+                ).quantize(Decimal("1.000000"))
+                cumulative_return += daily_return
+                twrr_daily_performance_list.append(
+                    CurrencyExchangeRateTWRRDTO(
+                        source_currency=entity.source_currency.code,
+                        target_currency=entity.target_currency.code,
+                        valuation_date=entity.valuation_date,
+                        rate_value=entity.rate_value,
+                        amount=current_value,
+                        twrr=daily_return,
+                        twrr_accumulated=cumulative_return,
+                    )
+                )
+                previous_value = current_value
+
+        return twrr_daily_performance_list
+
     def _validate_dates(self, start_date: date, end_date: date) -> None:
         if start_date > end_date:
             raise ValueError("Invalid date")
@@ -169,6 +254,19 @@ class CurrencyExchangeRateService:
     ) -> List[CurrencyExchangeRateEntity]:
         return [
             entity for entity in entities if entity.source_currency.code == currency
+        ]
+
+    def _filter_entities_by_currencies(
+        self,
+        entities: List[CurrencyExchangeRateEntity],
+        source_currency: str,
+        target_currency: str,
+    ) -> List[CurrencyExchangeRateEntity]:
+        return [
+            entity
+            for entity in entities
+            if entity.source_currency.code == source_currency
+            and entity.target_currency.code == target_currency
         ]
 
     def _get_multiple_exchanges_rates_from_provider(

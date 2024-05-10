@@ -49,3 +49,15 @@ class CurrencyExchangeConversionResponseSerializer(serializers.Serializer):
     target_currency = serializers.CharField(required=True)
     amount = serializers.DecimalField(max_digits=18, decimal_places=6)
     rate_value = serializers.DecimalField(max_digits=18, decimal_places=6)
+
+
+class CurrencyExchangeTWRRRequestSerializer(CurrencyExhangeConversionRequestSerializer):
+    start_date = serializers.DateField(format="%Y-%m-%d", required=True)
+
+
+class CurrencyExchangeRateTWRRResponseSerializer(
+    CurrencyExchangeConversionResponseSerializer
+):
+    valuation_date  = serializers.DateField(format="%Y-%m-%d", required=True)
+    twrr = serializers.DecimalField(max_digits=18, decimal_places=6)
+    twrr_accumulated = serializers.DecimalField(max_digits=18, decimal_places=6)

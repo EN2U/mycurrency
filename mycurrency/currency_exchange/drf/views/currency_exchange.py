@@ -7,6 +7,8 @@ from rest_framework.decorators import action
 from main.constants import FIXER_PROVIDER_NAME
 from currency_exchange.serialization.serializer.currency_exchange_rate import (
     CurrencyExchangeConversionResponseSerializer,
+    CurrencyExchangeRateTWRRResponseSerializer,
+    CurrencyExchangeTWRRRequestSerializer,
     CurrencyExchangeRateResponseSerializer,
     CurrencyExchangeTimeseriesByCurrencyRequestSerializer,
     CurrencyExchangeTimeseriesRequestSerializer,
@@ -15,6 +17,8 @@ from currency_exchange.serialization.serializer.currency_exchange_rate import (
 from currency_exchange.serialization.dto.currency_exchange_rate import (
     CurrencyExchangeConversionDTO,
     CurrencyExchangeConvertedDTO,
+    CurrencyExchangeRateTWRRDTO,
+    CurrencyExchangeTimeseriesByCurrenciesDTO,
     CurrencyExchangeTimeseriesByCurrencyDTO,
     CurrencyExchangeTimeseriesDTO,
 )
@@ -167,6 +171,54 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
 
         response: CurrencyExchangeConversionResponseSerializer = (
             CurrencyExchangeConversionResponseSerializer(currency_exchange_converted)
+        )
+
+        return Response(response.data, status=status.HTTP_200_OK)
+
+    @action(
+        methods=["GET"],
+        detail=False,
+        description="Return the amount value converted from source to target currency",
+        url_name="twrr",
+        url_path="twrr/(?P<source_currency>\w+)/(?P<amount>\d+(\.\d+)?)/(?P<target_currency>\w+)/(?P<start_date>\d{4}-\d{2}-\d{2})(?:/(?P<provider>\w+))?",
+    )
+    def get_twrr(self, request: Request, *args, **kwargs) -> Response:
+        source_currency = kwargs.get("source_currency")
+        target_currency = kwargs.get("target_currency")
+        amount = kwargs.get("amount")
+        provider = kwargs.get("provider") or FIXER_PROVIDER_NAME
+        start_date = kwargs.get("start_date")
+
+        data: Dict[str, str] = {
+            "source_currency": source_currency.upper(),
+            "target_currency": target_currency.upper(),
+            "provider": provider,
+            "amount": amount,
+            "start_date": start_date,
+        }
+
+        currency_exchange_investment_rate_serializer: (
+            CurrencyExchangeTWRRRequestSerializer
+        ) = CurrencyExchangeTWRRRequestSerializer(data=data)
+
+        currency_exchange_investment_rate_serializer.is_valid(raise_exception=True)
+
+        currency_exchange_investment_rate_dto: (
+            CurrencyExchangeTimeseriesByCurrenciesDTO
+        ) = CurrencyExchangeTimeseriesByCurrenciesDTO(
+            **currency_exchange_investment_rate_serializer.validated_data
+        )
+
+        currency_exchange_rate_twrr: List[CurrencyExchangeRateTWRRDTO] = (
+            self._currency_exchange_rate_service.get_investment_rate_by_range(
+                currency_exchange_investment_rate_dto=currency_exchange_investment_rate_dto
+            )
+        )
+
+        response: CurrencyExchangeRateTWRRResponseSerializer = (
+            CurrencyExchangeRateTWRRResponseSerializer(
+                currency_exchange_rate_twrr, many=True
+            )
         )
 
         return Response(response.data, status=status.HTTP_200_OK)

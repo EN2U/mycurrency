@@ -32,3 +32,17 @@ class CurrencyExchangeConvertedDTO(BaseModel):
     target_currency: str
     amount: Decimal
     rate_value: Decimal
+
+
+class CurrencyExchangeTimeseriesByCurrenciesDTO(CurrencyExchangeConversionDTO):
+    start_date: date
+
+
+class CurrencyExchangeRateTWRRDTO(BaseModel):
+    source_currency: str
+    target_currency: str
+    valuation_date: date
+    rate_value: Decimal
+    amount: Decimal
+    twrr: Decimal
+    twrr_accumulated: Decimal
