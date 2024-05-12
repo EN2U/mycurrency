@@ -1,6 +1,3 @@
-from enum import Enum
-
-
 class MyCurrencyError(Exception):
     def __init__(self, message, errors, status_code, data={}):
         super().__init__(message)

@@ -2,8 +2,6 @@ from django.contrib import admin
 
 from broker.models import Provider
 
-# Register your models here.
-
 
 class ProviderAdmin(admin.ModelAdmin):
     list_display = [

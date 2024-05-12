@@ -1,10 +1,8 @@
-from collections import defaultdict
 import csv
 import ast
 from decimal import Decimal
-import json
 from typing import Any, Dict, List, Optional
-from django.core.management.base import BaseCommand, CommandError, CommandParser
+from django.core.management.base import BaseCommand, CommandParser
 from currency_exchange.utils import CurrencyExchangeRateOperations
 from currency_exchange.core.services.currency_exchange_rate import (
     CurrencyExchangeRateService,

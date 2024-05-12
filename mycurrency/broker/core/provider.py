@@ -1,4 +1,3 @@
-from datetime import date
 from decimal import Decimal
 from typing import Dict, List, Union
 from broker.data.provider import ProviderRepository

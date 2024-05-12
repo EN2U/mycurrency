@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List
+from typing import List
 
 from currency_exchange.data.repos.currency_exchange import (
     CurrencyExchangeRateRepository,

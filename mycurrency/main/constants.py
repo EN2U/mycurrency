@@ -1,6 +1,3 @@
-from enum import Enum
-
-
 FIXER_PROVIDER_NAME = "fixer"
 FIXER_PROVIDER_URL = "http://data.fixer.io/api/"
 
