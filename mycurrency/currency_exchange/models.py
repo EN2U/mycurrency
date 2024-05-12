@@ -30,7 +30,3 @@ class CurrencyExchangeRate(UUIDBaseModel):
         verbose_name = _("Currency exchange rate")
         verbose_name_plural = _("Currency exchange rates")
         unique_together = ("source_currency", "target_currency", "valuation_date")
-
-
-class CurrencyExchangeManager(models.Manager):
-    pass

@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from main.base_models import UUIDBaseModel
 
 
-class ProviderTimeoutQueryset(models.QuerySet):
+class ProviderTimeoutQuerySet(models.QuerySet):
     def exclude_timeout(self):
         now = datetime.now()
         return self.filter(models.Q(timeout__isnull=True) | models.Q(timeout__lte=now))
@@ -16,7 +16,7 @@ class Provider(UUIDBaseModel):
     priority_order = models.IntegerField()
     timeout = models.DateTimeField(null=True, blank=True)
 
-    objects = ProviderTimeoutQueryset.as_manager()
+    objects = ProviderTimeoutQuerySet.as_manager()
 
     class Meta:
         db_table = "provider"

@@ -2,7 +2,7 @@ from typing import List
 
 from django.db import IntegrityError
 from broker.models import Provider as ProviderORM
-from broker.models import ProviderTimeoutQueryset
+from broker.models import ProviderTimeoutQuerySet
 from django.db.models import QuerySet
 
 from broker.serialization.entity.provider import ProviderEntity
@@ -14,7 +14,7 @@ from main.error_messages import EPROVIDER_DB_000001, MyCurrencyError
 
 class ProviderRepository:
     def retrieve(self) -> List[ProviderEntity]:
-        provider_queryset: ProviderTimeoutQueryset[ProviderORM] = (
+        provider_queryset: ProviderTimeoutQuerySet[ProviderORM] = (
             self._get_queryset_exclude_timeout().order_by("-priority_order")
         )
 

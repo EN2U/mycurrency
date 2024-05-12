@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from currency_exchange.core.providers.fixer_provider import FixerProvider
+from broker.provider.fixer_provider import FixerProvider
 from main.constants import FIXER_PROVIDER_NAME
 from rest_framework import status
 

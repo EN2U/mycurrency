@@ -4,7 +4,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.decorators import action
 
-from main.constants import FIXER_PROVIDER_NAME
 from currency_exchange.serialization.serializer.currency_exchange_rate import (
     CurrencyExchangeConversionResponseSerializer,
     CurrencyExchangeRateTWRRResponseSerializer,
@@ -35,7 +34,6 @@ AMOUNT = "(?P<amount>\d+(\.\d+)?)"
 TARGET_CURRENCY = "(?P<target_currency>\w+)"
 START_DATE = "(?P<start_date>\d{4}-\d{2}-\d{2})"
 END_DATE = "(?P<end_date>\d{4}-\d{2}-\d{2})"
-
 CURRENCY = "(?P<currency>\w+)"
 
 
@@ -43,14 +41,6 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
 
     def __init__(self, *args, **kwargs) -> None:
         self._currency_exchange_rate_service = CurrencyExchangeRateService()
-
-    def list(self, request: Request, *args, **kwargs) -> Response:
-        print(":) list")
-        return Response(status=status.HTTP_200_OK)
-
-    def retrieve(self, request: Request, *args, **kwargs) -> Response:
-        print(":) retrieve")
-        return Response(status=status.HTTP_200_OK)
 
     @action(
         methods=["GET"],

@@ -43,6 +43,7 @@ class CurrencyExchangeRateService:
     def get_timeseries(
         self, timeseries_dates_dto: CurrencyExchangeTimeseriesDTO
     ) -> List[CurrencyExchangeRateEntity]:
+
         self._validate_dates(
             start_date=timeseries_dates_dto.start_date,
             end_date=timeseries_dates_dto.end_date,
