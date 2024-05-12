@@ -21,7 +21,7 @@ class FixerProvider(CurrencyExchangeRateProvider):
 
     def get_currency_exchange_rate_by_date(
         self, current_date: date
-    ) -> Dict[str, Union[str, Decimal]]:
+    ) -> Dict[str, Union[str, Dict[str, Decimal]]]:
         url = self.create_url(current_date=current_date)
 
         try:

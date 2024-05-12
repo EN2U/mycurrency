@@ -71,8 +71,8 @@ class CurrencyExchangeRateRepository:
             for currency_exchange_rate_orm in currency_exchange_rate_queryset
         ]
 
-    def create_multiple_currency_exchange_rates(
-        self, currency_exchange_rate_list_dto: List[CurrencyExchangeRateCreateDTO]
+    def create_multiple(
+        self, new_currency_exchange_rate_list_dto: List[CurrencyExchangeRateCreateDTO]
     ) -> List[CurrencyExchangeRateEntity]:
 
         currency_exchange_rate_queryset: QuerySet[CurrencyExchangeRateORM] = (
@@ -84,7 +84,7 @@ class CurrencyExchangeRateRepository:
                         valuation_date=currency_exchange_rate_dto.valuation_date,
                         rate_value=currency_exchange_rate_dto.rate_value,
                     )
-                    for currency_exchange_rate_dto in currency_exchange_rate_list_dto
+                    for currency_exchange_rate_dto in new_currency_exchange_rate_list_dto
                 ]
             )
         )

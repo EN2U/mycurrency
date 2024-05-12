@@ -25,14 +25,14 @@ class CurrencyExchangeRateOperations:
 
         return [datetime.strptime(date, "%Y-%m-%d").date() for date in missing_dates]
 
-    # TODO: Fix this typing returned
     def calculate_exchange_rates_conversions(
-        self, data: Dict[str, Union[str, Decimal]]
+        self, data: Dict[str, Union[str, Dict[str, Decimal]]]
     ) -> List[CurrencyExchangeRateCreateDTO]:
         rates = data["rates"]
         current_date = datetime.strptime(data["date"], "%Y-%m-%d").date()
         exchange_rates = set()
 
+        print(rates)
         for source_currency, source_value in rates.items():
             for target_currency, target_value in rates.items():
 

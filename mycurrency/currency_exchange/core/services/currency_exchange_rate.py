@@ -26,13 +26,14 @@ from main.providers.base_providers import (
 from main.providers.providers_factory import (
     CurrencyExchangeRateProviderFactory,
 )
+from currency_exchange.core.services.currency import CurrencyService
 
 
 class CurrencyExchangeRateService:
     def __init__(self, *args, **kwargs) -> None:
         self._currency_exchange_repository = CurrencyExchangeRateRepository()
-        self._currency_repository = CurrencyRepository()
-        self._currency_exchange_operations = CurrencyExchangeRateOperations()
+        self._currency_service = CurrencyService()
+        self._currency_exchange_rate_operations = CurrencyExchangeRateOperations()
 
     def get_timeseries(
         self, timeseries_dates_dto: CurrencyExchangeTimeseriesDTO
@@ -62,7 +63,7 @@ class CurrencyExchangeRateService:
             start_date=timeseries_by_currency_dto.start_date,
             end_date=timeseries_by_currency_dto.end_date,
         )
-        if not self._currency_repository.check_currency_exists(
+        if not self.self._currency_service.check_currency_exists(
             currency=timeseries_by_currency_dto.currency
         ):
             raise ValueError("Invalid Currency code")
@@ -143,9 +144,9 @@ class CurrencyExchangeRateService:
             start_date=currency_exchange_investment_rate_dto.start_date,
             end_date=end_date,
         )
-        if not self._currency_repository.check_currency_exists(
+        if not self._currency_service.check_currency_exists(
             currency=currency_exchange_investment_rate_dto.source_currency
-        ) or not self._currency_repository.check_currency_exists(
+        ) or not self._currency_service.check_currency_exists(
             currency=currency_exchange_investment_rate_dto.target_currency
         ):
             raise ValueError("Invalid Currency code")
@@ -180,6 +181,13 @@ class CurrencyExchangeRateService:
         )
 
         return currency_exchange_rate_twrr_list
+
+    def create_multiple(
+        self, new_currency_exchange_rate_list_dto: CurrencyExchangeRateCreateDTO
+    ):
+        self._currency_exchange_repository.create_multiple(
+            new_currency_exchange_rate_list_dto=new_currency_exchange_rate_list_dto
+        )
 
     def _get_twrr(
         self,
@@ -232,7 +240,7 @@ class CurrencyExchangeRateService:
         )
         num_of_series_required = (end_date - start_date + timedelta(days=1)).days
         if num_of_series_on_db != num_of_series_required:
-            missing_dates = self._currency_exchange_operations.find_missing_dates(
+            missing_dates = self._currency_exchange_rate_operations.find_missing_dates(
                 current_date_list=[
                     rate.valuation_date.strftime("%Y-%m-%d")
                     for rate in currency_exchange_rate_entity_list
@@ -272,9 +280,7 @@ class CurrencyExchangeRateService:
     def _get_multiple_exchanges_rates_from_provider(
         self, dates: List[date], provider: str
     ) -> List[CurrencyExchangeRateEntity]:
-        currency_entity_list: List[CurrencyEntity] = (
-            self._currency_repository.get_currencies()
-        )
+        currency_entity_list: List[CurrencyEntity] = self._currency_service.retrieve()
         currency_exchange_provider: Union[
             CurrencyExchangeRateProvider
         ] = CurrencyExchangeRateProviderFactory().get_exchange_provider(
@@ -284,22 +290,20 @@ class CurrencyExchangeRateService:
 
         new_currency_exchange_rates: List[CurrencyExchangeRateCreateDTO] = []
         for current_date in dates:
-            response: Dict[str, Union[str, Decimal]] = (
+            response: Dict[str, Union[str, Dict[str, Decimal]]] = (
                 currency_exchange_provider.get_currency_exchange_rate_by_date(
                     current_date=current_date
                 )
             )
             new_currency_exchange_rates_conversions: List[
                 CurrencyExchangeRateCreateDTO
-            ] = self._currency_exchange_operations.calculate_exchange_rates_conversions(
+            ] = self._currency_exchange_rate_operations.calculate_exchange_rates_conversions(
                 data=response
             )
             new_currency_exchange_rates: List[CurrencyExchangeRateCreateDTO] = (
                 new_currency_exchange_rates + new_currency_exchange_rates_conversions
             )
 
-        return (
-            self._currency_exchange_repository.create_multiple_currency_exchange_rates(
-                currency_exchange_rate_list_dto=new_currency_exchange_rates
-            )
+        return self.create_multiple(
+            new_currency_exchange_rate_list_dto=new_currency_exchange_rates
         )

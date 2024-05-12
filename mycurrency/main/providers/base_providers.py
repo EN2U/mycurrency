@@ -1,5 +1,6 @@
 import abc
 from datetime import date
+from decimal import Decimal
 from typing import Dict, List, Union
 
 
@@ -21,5 +22,5 @@ class CurrencyExchangeRateProvider(abc.ABC):
     @abc.abstractmethod
     def get_currency_exchange_rate_by_date(
         self, date: date
-    ) -> Dict[str, Union[str, float]]:
+    ) -> Dict[str, Union[str, Dict[str, Decimal]]]:
         pass
