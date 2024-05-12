@@ -1,5 +1,7 @@
 from datetime import date, datetime, timedelta
 from typing import List
+
+from django.db import IntegrityError
 from currency_exchange.serialization.dto.currency_exchange_rate import (
     CurrencyExchangeRateCreateDTO,
     CurrencyExchangeTimeseriesByCurrenciesDTO,
@@ -9,10 +11,14 @@ from currency_exchange.serialization.dto.currency_exchange_rate import (
 from currency_exchange.serialization.entity.currency_exchange_rate import (
     CurrencyExchangeRateEntity,
 )
-
+from rest_framework import status
 from django.db.models import QuerySet
 
 from currency_exchange.models import CurrencyExchangeRate as CurrencyExchangeRateORM
+from main.error_messages import (
+    ECURRENCY_EXCHANGE_RATE_DB_000001,
+    MyCurrencyError,
+)
 
 
 class CurrencyExchangeRateRepository:
@@ -46,15 +52,6 @@ class CurrencyExchangeRateRepository:
             for currency_exchange_rate_orm in currency_exchange_rate_queryset
         ]
 
-    def _filter_by_range_currency(
-        self, start_date: date, end_date: date, currency: str
-    ):
-        return self._get_queryset().filter(
-            valuation_date__gte=start_date,
-            valuation_date__lte=end_date,
-            source_currency__code=currency,
-        )
-
     def get_timeseries_by_source_target_currency(
         self, timeseries_by_currencies_dto: CurrencyExchangeTimeseriesByCurrenciesDTO
     ) -> List[CurrencyExchangeRateORM]:
@@ -75,20 +72,26 @@ class CurrencyExchangeRateRepository:
         self, new_currency_exchange_rate_list_dto: List[CurrencyExchangeRateCreateDTO]
     ) -> List[CurrencyExchangeRateEntity]:
 
-        currency_exchange_rate_queryset: QuerySet[CurrencyExchangeRateORM] = (
-            CurrencyExchangeRateORM.objects.bulk_create(
-                [
-                    CurrencyExchangeRateORM(
-                        source_currency_id=currency_exchange_rate_dto.source_currency,
-                        target_currency_id=currency_exchange_rate_dto.target_currency,
-                        valuation_date=currency_exchange_rate_dto.valuation_date,
-                        rate_value=currency_exchange_rate_dto.rate_value,
-                    )
-                    for currency_exchange_rate_dto in new_currency_exchange_rate_list_dto
-                ]
+        try:
+            currency_exchange_rate_queryset: QuerySet[CurrencyExchangeRateORM] = (
+                CurrencyExchangeRateORM.objects.bulk_create(
+                    [
+                        CurrencyExchangeRateORM(
+                            source_currency_id=currency_exchange_rate_dto.source_currency,
+                            target_currency_id=currency_exchange_rate_dto.target_currency,
+                            valuation_date=currency_exchange_rate_dto.valuation_date,
+                            rate_value=currency_exchange_rate_dto.rate_value,
+                        )
+                        for currency_exchange_rate_dto in new_currency_exchange_rate_list_dto
+                    ]
+                )
             )
-        )
-
+        except IntegrityError:
+            raise MyCurrencyError(
+                message="One or more of the provided currency exchange rates already exist.",
+                errors=ECURRENCY_EXCHANGE_RATE_DB_000001,
+                status_code=status.HTTP_409_CONFLICT,
+            )
         return [
             self._orm_to_entity(orm=currency_exchange_rate_orm)
             for currency_exchange_rate_orm in currency_exchange_rate_queryset
@@ -105,6 +108,15 @@ class CurrencyExchangeRateRepository:
         )
 
         return self._orm_to_entity(orm=currency_exchange_rate_orm)
+
+    def _filter_by_range_currency(
+        self, start_date: date, end_date: date, currency: str
+    ):
+        return self._get_queryset().filter(
+            valuation_date__gte=start_date,
+            valuation_date__lte=end_date,
+            source_currency__code=currency,
+        )
 
     def _orm_to_entity(
         self, orm: CurrencyExchangeRateORM

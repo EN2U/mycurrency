@@ -32,7 +32,6 @@ class CurrencyExchangeRateOperations:
         current_date = datetime.strptime(data["date"], "%Y-%m-%d").date()
         exchange_rates = set()
 
-        print(rates)
         for source_currency, source_value in rates.items():
             for target_currency, target_value in rates.items():
 

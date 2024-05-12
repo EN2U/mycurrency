@@ -57,6 +57,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+REST_FRAMEWORK = {"EXCEPTION_HANDLER": "main.utils.custom_exception_handler"}
+
 ROOT_URLCONF = "main.urls"
 
 TEMPLATES = [
@@ -117,7 +119,7 @@ TIME_ZONE = "UTC"
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)

@@ -30,6 +30,15 @@ from currency_exchange.core.services.currency_exchange_rate import (
 )
 
 
+SOURCE_CURRENCY = "(?P<source_currency>\w+)"
+AMOUNT = "(?P<amount>\d+(\.\d+)?)"
+TARGET_CURRENCY = "(?P<target_currency>\w+)"
+START_DATE = "(?P<start_date>\d{4}-\d{2}-\d{2})"
+END_DATE = "(?P<end_date>\d{4}-\d{2}-\d{2})"
+
+CURRENCY = "(?P<currency>\w+)"
+
+
 class CurrencyExchangeViewSet(viewsets.ViewSet):
 
     def __init__(self, *args, **kwargs) -> None:
@@ -48,7 +57,7 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         detail=False,
         description="Return a timeseries given a range date",
         url_name="timeseries",
-        url_path="timeseries/(?P<start_date>\d{4}-\d{2}-\d{2})/(?P<end_date>\d{4}-\d{2}-\d{2})",
+        url_path="timeseries/" + START_DATE + "/" + END_DATE,
     )
     def timeseries(self, request: Request, *args, **kwargs) -> Response:
         start_date = kwargs.get("start_date")
@@ -87,7 +96,12 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         detail=False,
         description="Return a timeseries given by a range date from specific currency",
         url_name="timeseries-by-currency",
-        url_path="timeseries-by-currency/(?P<currency>\w+)/(?P<start_date>\d{4}-\d{2}-\d{2})/(?P<end_date>\d{4}-\d{2}-\d{2})",
+        url_path="timeseries-by-currency/"
+        + CURRENCY
+        + "/"
+        + START_DATE
+        + "/"
+        + END_DATE,
     )
     def timeseries_by_currency(self, request: Request, *args, **kwargs) -> Response:
         currency = kwargs.get("currency")
@@ -130,7 +144,13 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         detail=False,
         description="Return the amount value converted from source to target currency",
         url_name="conversion",
-        url_path="conversion/(?P<source_currency>\w+)/(?P<amount>\d+(\.\d+)?)/(?P<target_currency>\w+)/latest",
+        url_path="conversion/"
+        + SOURCE_CURRENCY
+        + "/"
+        + AMOUNT
+        + "/"
+        + TARGET_CURRENCY
+        + "/latest",
     )
     def get_latest_currency_exchange(
         self, request: Request, *args, **kwargs
@@ -174,7 +194,16 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         detail=False,
         description="Return the amount value converted from source to target currency",
         url_name="twrr",
-        url_path="twrr/(?P<source_currency>\w+)/(?P<amount>\d+(\.\d+)?)/(?P<target_currency>\w+)/(?P<start_date>\d{4}-\d{2}-\d{2})",
+        url_path=(
+            "twrr/"
+            + SOURCE_CURRENCY
+            + "/"
+            + AMOUNT
+            + "/"
+            + TARGET_CURRENCY
+            + "/"
+            + START_DATE
+        ),
     )
     def get_twrr(self, request: Request, *args, **kwargs) -> Response:
         source_currency = kwargs.get("source_currency")

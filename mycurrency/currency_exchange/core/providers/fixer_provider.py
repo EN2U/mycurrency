@@ -30,8 +30,10 @@ class FixerProvider(CurrencyExchangeRateProvider):
             if 200 <= response.status_code < 500:
                 return response.json(parse_float=Decimal)
             else:
-                raise Exception(
+                error_message = (
                     f"HTTP {response.status_code} error while calling {response.url}"
                 )
+                raise ConnectionError(error_message)
         except requests.RequestException:
-            raise Exception(f"Connection failed while calling {response.url}")
+            error_message = f"Connection failed while calling {url}: {str(e)}"
+            raise ConnectionError(error_message)

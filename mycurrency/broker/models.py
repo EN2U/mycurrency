@@ -7,7 +7,6 @@ from main.base_models import UUIDBaseModel
 
 class ProviderTimeoutQueryset(models.QuerySet):
     def exclude_timeout(self):
-        print(":)")
         now = datetime.now()
         return self.filter(models.Q(timeout__isnull=True) | models.Q(timeout__lte=now))
 

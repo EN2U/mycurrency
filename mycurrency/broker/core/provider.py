@@ -8,6 +8,8 @@ from broker.provider.base.providers_factory import (
     CurrencyExchangeRateProviderFactory,
 )
 from broker.serialization.dto.provider import ProviderCreateDTO, ProviderRetrieveDTO
+from main.error_messages import EPROVIDER_000001, MyCurrencyError
+from rest_framework import status
 
 
 class ProviderService:
@@ -21,6 +23,14 @@ class ProviderService:
         )
 
         response = {}
+
+        if not provider_entity_list:
+
+            raise MyCurrencyError(
+                message="Providers not available in this moment",
+                errors=EPROVIDER_000001,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         for provider_entity in provider_entity_list:
             exchange_provider: Union[CurrencyExchangeRateProvider] = (

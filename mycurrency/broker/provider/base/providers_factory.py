@@ -2,6 +2,9 @@ from typing import List, Union
 
 from currency_exchange.core.providers.fixer_provider import FixerProvider
 from main.constants import FIXER_PROVIDER_NAME
+from rest_framework import status
+
+from main.error_messages import EPROVIDER_000002, MyCurrencyError
 
 
 class CurrencyExchangeRateProviderFactory:
@@ -19,4 +22,6 @@ class CurrencyExchangeRateProviderFactory:
         if provider == FIXER_PROVIDER_NAME:
             return FixerProvider(code_list=code_list)
 
-        raise
+        raise MyCurrencyError(
+            errors=EPROVIDER_000002, status_code=status.HTTP_400_BAD_REQUEST
+        )

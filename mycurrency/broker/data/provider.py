@@ -1,9 +1,15 @@
 from typing import List
-from broker.models import Provider as ProviderORM, ProviderTimeoutQueryset
+
+from django.db import IntegrityError
+from broker.models import Provider as ProviderORM
+from broker.models import ProviderTimeoutQueryset
 from django.db.models import QuerySet
 
 from broker.serialization.entity.provider import ProviderEntity
 from broker.serialization.dto.provider import ProviderCreateDTO
+from rest_framework import status
+
+from main.error_messages import EPROVIDER_DB_000001, MyCurrencyError
 
 
 class ProviderRepository:
@@ -25,12 +31,21 @@ class ProviderRepository:
     def create_multiple(
         self, new_providers: List[ProviderCreateDTO]
     ) -> List[ProviderEntity]:
-        ProviderORM.objects.bulk_create(
-            [
-                ProviderORM(name=provider.name, priority_order=provider.priority_order)
-                for provider in new_providers
-            ]
-        )
+        try:
+            ProviderORM.objects.bulk_create(
+                [
+                    ProviderORM(
+                        name=provider.name, priority_order=provider.priority_order
+                    )
+                    for provider in new_providers
+                ]
+            )
+        except IntegrityError:
+            raise MyCurrencyError(
+                message="One or more of the provided providers already exist.",
+                errors=EPROVIDER_DB_000001,
+                status_code=status.HTTP_409_CONFLICT,
+            )
 
     def _orm_to_entity(self, orm: ProviderORM) -> ProviderEntity:
         return ProviderEntity.model_validate(orm)

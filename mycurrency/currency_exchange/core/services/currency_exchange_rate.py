@@ -1,11 +1,10 @@
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from currency_exchange.data.repos.currency_exchange import (
     CurrencyExchangeRateRepository,
 )
-from currency_exchange.data.repos.currency import CurrencyRepository
 from currency_exchange.utils import CurrencyExchangeRateOperations
 from currency_exchange.serialization.dto.currency_exchange_rate import (
     CurrencyExchangeConversionDTO,
@@ -21,14 +20,17 @@ from currency_exchange.serialization.entity.currency_exchange_rate import (
     CurrencyExchangeRateEntity,
 )
 from broker.core.provider import ProviderService
-from broker.provider.base.base_providers import (
-    CurrencyExchangeRateProvider,
-)
-from broker.provider.base.providers_factory import (
-    CurrencyExchangeRateProviderFactory,
-)
+
 from currency_exchange.core.services.currency import CurrencyService
 from broker.serialization.dto.provider import ProviderRetrieveDTO
+from main.error_messages import (
+    ECURRENCY_EXCHANGE_RATE_000001,
+    ECURRENCY_EXCHANGE_RATE_000002,
+    ECURRENCY_EXCHANGE_RATE_000003,
+    MyCurrencyError,
+)
+
+from rest_framework import status
 
 
 class CurrencyExchangeRateService:
@@ -65,10 +67,14 @@ class CurrencyExchangeRateService:
             start_date=timeseries_by_currency_dto.start_date,
             end_date=timeseries_by_currency_dto.end_date,
         )
-        if not self.self._currency_service.check_currency_exists(
+        if not self._currency_service.check_currency_exists(
             currency=timeseries_by_currency_dto.currency
         ):
-            raise ValueError("Invalid Currency code")
+            raise MyCurrencyError(
+                message="Invalid currency code.",
+                errors=ECURRENCY_EXCHANGE_RATE_000001,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         currency_exchange_rate_entity_list: List[CurrencyExchangeRateEntity] = (
             self._currency_exchange_repository.get_timeseries_by_currency(
@@ -80,7 +86,6 @@ class CurrencyExchangeRateService:
             currency_exchange_rate_entity_list=currency_exchange_rate_entity_list,
             start_date=timeseries_by_currency_dto.start_date,
             end_date=timeseries_by_currency_dto.end_date,
-            provider=timeseries_by_currency_dto.provider,
         )
         filtered_entities: List[CurrencyExchangeRateEntity] = (
             self._filter_entities_by_currency(
@@ -106,7 +111,6 @@ class CurrencyExchangeRateService:
             new_currency_exchange_rate_entity_list: List[CurrencyExchangeRateEntity] = (
                 self._get_multiple_exchanges_rates_from_provider(
                     dates=[previous_date],
-                    provider=currency_exchange_conversion_dto.provider,
                 )
             )
 
@@ -123,7 +127,11 @@ class CurrencyExchangeRateService:
             )
 
             if not matching_element:
-                raise Exception("Not found")
+                raise MyCurrencyError(
+                    message="Currency exchange rate not found for the provided currencies.",
+                    errors=ECURRENCY_EXCHANGE_RATE_000002,
+                    status_code=status.HTTP_404_NOT_FOUND,
+                )
 
             rate_value = matching_element.rate_value
 
@@ -151,7 +159,11 @@ class CurrencyExchangeRateService:
         ) or not self._currency_service.check_currency_exists(
             currency=currency_exchange_investment_rate_dto.target_currency
         ):
-            raise ValueError("Invalid Currency code")
+            raise MyCurrencyError(
+                message="One or both of the currencies do not exist.",
+                errors=ECURRENCY_EXCHANGE_RATE_000001,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         currency_exchange_rate_entity_list: List[CurrencyExchangeRateEntity] = (
             self._currency_exchange_repository.get_timeseries_by_source_target_currency(
@@ -227,7 +239,11 @@ class CurrencyExchangeRateService:
 
     def _validate_dates(self, start_date: date, end_date: date) -> None:
         if start_date > end_date:
-            raise ValueError("Invalid date")
+            raise MyCurrencyError(
+                message="Starting date cannot be greater than end date",
+                errors=ECURRENCY_EXCHANGE_RATE_000003,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
     def _check_time_series(
         self,
