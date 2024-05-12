@@ -6,7 +6,6 @@ from datetime import date
 class CurrencyExchangeTimeseriesDTO(BaseModel):
     start_date: date
     end_date: date
-    provider: str
 
 
 class CurrencyExchangeRateCreateDTO(BaseModel):
@@ -23,7 +22,6 @@ class CurrencyExchangeTimeseriesByCurrencyDTO(CurrencyExchangeTimeseriesDTO):
 class CurrencyExchangeConversionDTO(BaseModel):
     source_currency: str
     target_currency: str
-    provider: str
     amount: Decimal
 
 

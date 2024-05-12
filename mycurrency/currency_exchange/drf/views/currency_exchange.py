@@ -48,17 +48,15 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         detail=False,
         description="Return a timeseries given a range date",
         url_name="timeseries",
-        url_path="timeseries/(?P<start_date>\d{4}-\d{2}-\d{2})/(?P<end_date>\d{4}-\d{2}-\d{2})(?:/(?P<provider>\w+))?",
+        url_path="timeseries/(?P<start_date>\d{4}-\d{2}-\d{2})/(?P<end_date>\d{4}-\d{2}-\d{2})",
     )
     def timeseries(self, request: Request, *args, **kwargs) -> Response:
         start_date = kwargs.get("start_date")
         end_date = kwargs.get("end_date")
-        provider = kwargs.get("provider") or FIXER_PROVIDER_NAME
 
         data: Dict[str, str] = {
             "start_date": start_date,
             "end_date": end_date,
-            "provider": provider,
         }
         timeseries_dates_serializer: CurrencyExchangeTimeseriesRequestSerializer = (
             CurrencyExchangeTimeseriesRequestSerializer(data=data)
@@ -89,18 +87,16 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         detail=False,
         description="Return a timeseries given by a range date from specific currency",
         url_name="timeseries-by-currency",
-        url_path="timeseries-by-currency/(?P<currency>\w+)/(?P<start_date>\d{4}-\d{2}-\d{2})/(?P<end_date>\d{4}-\d{2}-\d{2})(?:/(?P<provider>\w+))?",
+        url_path="timeseries-by-currency/(?P<currency>\w+)/(?P<start_date>\d{4}-\d{2}-\d{2})/(?P<end_date>\d{4}-\d{2}-\d{2})",
     )
     def timeseries_by_currency(self, request: Request, *args, **kwargs) -> Response:
         currency = kwargs.get("currency")
         start_date = kwargs.get("start_date")
         end_date = kwargs.get("end_date")
-        provider = kwargs.get("provider") or FIXER_PROVIDER_NAME
 
         data: Dict[str, str] = {
             "start_date": start_date,
             "end_date": end_date,
-            "provider": provider,
             "currency": currency.upper(),
         }
         timeseries_serializer: CurrencyExchangeTimeseriesByCurrencyRequestSerializer = (
@@ -134,7 +130,7 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         detail=False,
         description="Return the amount value converted from source to target currency",
         url_name="conversion",
-        url_path="conversion/(?P<source_currency>\w+)/(?P<amount>\d+(\.\d+)?)/(?P<target_currency>\w+)(?:/(?P<provider>\w+))?/latest",
+        url_path="conversion/(?P<source_currency>\w+)/(?P<amount>\d+(\.\d+)?)/(?P<target_currency>\w+)/latest",
     )
     def get_latest_currency_exchange(
         self, request: Request, *args, **kwargs
@@ -142,12 +138,10 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         source_currency = kwargs.get("source_currency")
         target_currency = kwargs.get("target_currency")
         amount = kwargs.get("amount")
-        provider = kwargs.get("provider") or FIXER_PROVIDER_NAME
 
         data: Dict[str, str] = {
             "source_currency": source_currency.upper(),
             "target_currency": target_currency.upper(),
-            "provider": provider,
             "amount": amount,
         }
 
@@ -180,19 +174,17 @@ class CurrencyExchangeViewSet(viewsets.ViewSet):
         detail=False,
         description="Return the amount value converted from source to target currency",
         url_name="twrr",
-        url_path="twrr/(?P<source_currency>\w+)/(?P<amount>\d+(\.\d+)?)/(?P<target_currency>\w+)/(?P<start_date>\d{4}-\d{2}-\d{2})(?:/(?P<provider>\w+))?",
+        url_path="twrr/(?P<source_currency>\w+)/(?P<amount>\d+(\.\d+)?)/(?P<target_currency>\w+)/(?P<start_date>\d{4}-\d{2}-\d{2})",
     )
     def get_twrr(self, request: Request, *args, **kwargs) -> Response:
         source_currency = kwargs.get("source_currency")
         target_currency = kwargs.get("target_currency")
         amount = kwargs.get("amount")
-        provider = kwargs.get("provider") or FIXER_PROVIDER_NAME
         start_date = kwargs.get("start_date")
 
         data: Dict[str, str] = {
             "source_currency": source_currency.upper(),
             "target_currency": target_currency.upper(),
-            "provider": provider,
             "amount": amount,
             "start_date": start_date,
         }

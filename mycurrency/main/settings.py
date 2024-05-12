@@ -36,7 +36,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-LOCAL_APPS = ["currency_exchange"]
+LOCAL_APPS = ["currency_exchange", "broker"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",

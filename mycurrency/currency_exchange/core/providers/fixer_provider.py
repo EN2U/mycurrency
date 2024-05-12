@@ -6,15 +6,15 @@ from typing import Dict, List, Union
 import requests
 
 from main.constants import FIXER_PROVIDER_NAME, FIXER_PROVIDER_URL
-from main.providers.base_providers import CurrencyExchangeRateProvider
+from broker.provider.base.base_providers import CurrencyExchangeRateProvider
 
 
 class FixerProvider(CurrencyExchangeRateProvider):
 
-    def __init__(self, code: List[str]) -> None:
+    def __init__(self, code_list: List[str]) -> None:
         self.provider_name = FIXER_PROVIDER_NAME
 
-        super().__init__(code=code, provider_url=FIXER_PROVIDER_URL)
+        super().__init__(code_list=code_list, provider_url=FIXER_PROVIDER_URL)
 
     def get_access_key(self) -> str:
         return os.getenv("FIXER_API_KEY")

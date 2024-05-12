@@ -20,13 +20,15 @@ from currency_exchange.serialization.entity.currency import CurrencyEntity
 from currency_exchange.serialization.entity.currency_exchange_rate import (
     CurrencyExchangeRateEntity,
 )
-from main.providers.base_providers import (
+from broker.core.provider import ProviderService
+from broker.provider.base.base_providers import (
     CurrencyExchangeRateProvider,
 )
-from main.providers.providers_factory import (
+from broker.provider.base.providers_factory import (
     CurrencyExchangeRateProviderFactory,
 )
 from currency_exchange.core.services.currency import CurrencyService
+from broker.serialization.dto.provider import ProviderRetrieveDTO
 
 
 class CurrencyExchangeRateService:
@@ -34,6 +36,7 @@ class CurrencyExchangeRateService:
         self._currency_exchange_repository = CurrencyExchangeRateRepository()
         self._currency_service = CurrencyService()
         self._currency_exchange_rate_operations = CurrencyExchangeRateOperations()
+        self._provider_service = ProviderService()
 
     def get_timeseries(
         self, timeseries_dates_dto: CurrencyExchangeTimeseriesDTO
@@ -52,7 +55,6 @@ class CurrencyExchangeRateService:
             currency_exchange_rate_entity_list=currency_exchange_rate_entity_list,
             start_date=timeseries_dates_dto.start_date,
             end_date=timeseries_dates_dto.end_date,
-            provider=timeseries_dates_dto.provider,
         )
         return currency_exchange_rate_entity_list
 
@@ -161,7 +163,6 @@ class CurrencyExchangeRateService:
             currency_exchange_rate_entity_list=currency_exchange_rate_entity_list,
             start_date=currency_exchange_investment_rate_dto.start_date,
             end_date=end_date,
-            provider=currency_exchange_investment_rate_dto.provider,
         )
         filtered_entities: List[CurrencyExchangeRateEntity] = (
             self._filter_entities_by_currencies(
@@ -184,8 +185,8 @@ class CurrencyExchangeRateService:
 
     def create_multiple(
         self, new_currency_exchange_rate_list_dto: CurrencyExchangeRateCreateDTO
-    ):
-        self._currency_exchange_repository.create_multiple(
+    ) -> List[CurrencyExchangeRateEntity]:
+        return self._currency_exchange_repository.create_multiple(
             new_currency_exchange_rate_list_dto=new_currency_exchange_rate_list_dto
         )
 
@@ -233,7 +234,6 @@ class CurrencyExchangeRateService:
         currency_exchange_rate_entity_list: List[CurrencyExchangeRateEntity],
         start_date: date,
         end_date: date,
-        provider: str,
     ) -> None:
         num_of_series_on_db = len(
             {rate.valuation_date for rate in currency_exchange_rate_entity_list}
@@ -249,9 +249,7 @@ class CurrencyExchangeRateService:
                 end_date=end_date,
             )
             new_currency_exchange_rate_entity_list: List[CurrencyExchangeRateEntity] = (
-                self._get_multiple_exchanges_rates_from_provider(
-                    dates=missing_dates, provider=provider
-                )
+                self._get_multiple_exchanges_rates_from_provider(dates=missing_dates)
             )
             currency_exchange_rate_entity_list.extend(
                 new_currency_exchange_rate_entity_list
@@ -278,21 +276,18 @@ class CurrencyExchangeRateService:
         ]
 
     def _get_multiple_exchanges_rates_from_provider(
-        self, dates: List[date], provider: str
+        self, dates: List[date]
     ) -> List[CurrencyExchangeRateEntity]:
         currency_entity_list: List[CurrencyEntity] = self._currency_service.retrieve()
-        currency_exchange_provider: Union[
-            CurrencyExchangeRateProvider
-        ] = CurrencyExchangeRateProviderFactory().get_exchange_provider(
-            provider=provider,
-            code=[currency.code for currency in currency_entity_list],
-        )
+
+        code_list: List[str] = [currency.code for currency in currency_entity_list]
 
         new_currency_exchange_rates: List[CurrencyExchangeRateCreateDTO] = []
         for current_date in dates:
-            response: Dict[str, Union[str, Dict[str, Decimal]]] = (
-                currency_exchange_provider.get_currency_exchange_rate_by_date(
-                    current_date=current_date
+            response = self._provider_service.retrieve(
+                provider_retrieve_dto=ProviderRetrieveDTO(
+                    current_date=current_date,
+                    code_list=code_list,
                 )
             )
             new_currency_exchange_rates_conversions: List[
